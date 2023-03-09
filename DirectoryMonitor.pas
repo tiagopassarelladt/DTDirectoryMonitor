@@ -1,0 +1,150 @@
+unit DirectoryMonitor;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Monitor,Vcl.Forms;
+
+type
+  TMov = procedure(Action:string;FileName:string) of object;
+
+type
+  TDTDirectorMonitor = class(TComponent)
+  private
+    fDirMon: TDirectoryMonitor;
+    fStarted: Boolean;
+    fAddAction, fRemoveAction, fModifyAction, fRenameAction: TActionToWatch;
+    FDiretorio: string;
+    FArquivoModificado: Boolean;
+    FArquivoRenomeado: Boolean;
+    FArquivoRemovido: Boolean;
+    FArquivoAdicionado: Boolean;
+    FOnChange: TMov;
+    procedure DirChange(Sender: TObject; Action: TDirectoryMonitorAction; const FileName: string);
+    procedure SetDiretorio(const Value: string);
+    procedure SetArquivoAdicionado(const Value: Boolean);
+    procedure SetArquivoModificado(const Value: Boolean);
+    procedure SetArquivoRemovido(const Value: Boolean);
+    procedure SetArquivoRenomeado(const Value: Boolean);
+
+  protected
+
+  public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure Start;
+    procedure Stop;
+
+  published
+    property Path              : string  read FDiretorio          write SetDiretorio;
+    property ArquivoAdicionado : Boolean read FArquivoAdicionado  write SetArquivoAdicionado;
+    property ArquivoRemovido   : Boolean read FArquivoRemovido    write SetArquivoRemovido;
+    property ArquivoModificado : Boolean read FArquivoModificado  write SetArquivoModificado;
+    property ArquivoRenomeado  : Boolean read FArquivoRenomeado   write SetArquivoRenomeado;
+    property OnChange: TMov read FOnChange write FOnChange;
+
+  end;
+
+procedure Register;
+
+implementation
+
+procedure Register;
+begin
+  RegisterComponents('DT Inovacao', [TDTDirectorMonitor]);
+end;
+
+{ TDTDirectorMonitor }
+
+constructor TDTDirectorMonitor.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+
+  fDirMon           := TDirectoryMonitor.Create;
+  fDirMon.OnChange  := DirChange;
+  fDirMon.Actions   := [awChangeFileName];
+  FDiretorio        := '';//TPath.GetDocumentsPath;
+  fDirMon.Directory := '';
+  fAddAction        := awChangeCreation;
+  fRemoveAction     := awChangeAttributes;
+  fModifyAction     := awChangeLastWrite;
+  fRenameAction     := awChangeFileName;
+end;
+
+destructor TDTDirectorMonitor.Destroy;
+begin
+  fDirMon.Free;
+  inherited Destroy;
+end;
+
+procedure TDTDirectorMonitor.DirChange(Sender: TObject;
+  Action: TDirectoryMonitorAction; const FileName: string);
+Const
+ActionDesc: Array [TDirectoryMonitorAction] Of String =
+   ('Unknown action',
+    'FILE_ACTION_ADDED',
+    'FILE_ACTION_REMOVED',
+    'FILE_ACTION_MODIFIED',
+    'FILE_ACTION_RENAMED_OLD_NAME',
+    'FILE_ACTION_RENAMED_NEW_NAME');
+begin
+    if Assigned( FOnChange ) then
+       FOnChange( Format(ActionDesc[Action],[FileName]) , FileName );
+       application.ProcessMessages;
+end;
+
+procedure TDTDirectorMonitor.SetArquivoAdicionado(const Value: Boolean);
+begin
+  FArquivoAdicionado := Value;
+
+  if FArquivoAdicionado then
+    fDirMon.Actions := fDirMon.Actions + [fAddAction]
+  else
+    fDirMon.Actions := fDirMon.Actions - [fAddAction];
+end;
+
+procedure TDTDirectorMonitor.SetArquivoModificado(const Value: Boolean);
+begin
+  FArquivoModificado := Value;
+  if FArquivoModificado then
+    fDirMon.Actions := fDirMon.Actions + [fModifyAction]
+  else
+    fDirMon.Actions := fDirMon.Actions - [fModifyAction];
+end;
+
+procedure TDTDirectorMonitor.SetArquivoRemovido(const Value: Boolean);
+begin
+  FArquivoRemovido := Value;
+  if FArquivoRemovido then
+    fDirMon.Actions := fDirMon.Actions + [fRemoveAction]
+  else
+    fDirMon.Actions := fDirMon.Actions - [fRemoveAction];
+end;
+
+procedure TDTDirectorMonitor.SetArquivoRenomeado(const Value: Boolean);
+begin
+  FArquivoRenomeado := Value;
+  if FArquivoRenomeado then
+    fDirMon.Actions := fDirMon.Actions + [fRenameAction]
+  else
+    fDirMon.Actions := fDirMon.Actions - [fRenameAction];
+end;
+
+procedure TDTDirectorMonitor.SetDiretorio(const Value: string);
+begin
+  FDiretorio        := Value;
+  fDirMon.Directory := FDiretorio;
+end;
+
+procedure TDTDirectorMonitor.Start;
+begin
+   FStarted := not fStarted;
+   FDirMon.Start;
+end;
+
+procedure TDTDirectorMonitor.Stop;
+begin
+   fDirMon.Stop;
+end;
+
+end.

@@ -1,0 +1,85 @@
+unit Unit7;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, DirectoryMonitor,Vcl.FileCtrl;
+
+type
+  TForm7 = class(TForm)
+    btnStart: TButton;
+    memLog: TMemo;
+    txtCurrentdir: TEdit;
+    btnSelectDir: TButton;
+    grpNotify: TGroupBox;
+    chkFileAdd: TCheckBox;
+    chkFileRemoved: TCheckBox;
+    chkFileRenamed: TCheckBox;
+    chkFileModified: TCheckBox;
+    DTDirectorMonitor1: TDTDirectorMonitor;
+    Button1: TButton;
+    procedure btnStartClick(Sender: TObject);
+    procedure btnSelectDirClick(Sender: TObject);
+    procedure DTDirectorMonitor1Change(Action, FileName: string);
+    procedure Button1Click(Sender: TObject);
+  private
+
+  public
+
+  end;
+
+var
+  Form7: TForm7;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm7.btnSelectDirClick(Sender: TObject);
+var
+  vDir: String;
+begin
+  if SelectDirectory(vDir, [sdAllowCreate, sdPerformCreate, sdPrompt], 1000) then
+  begin
+    DTDirectorMonitor1.Stop;
+    txtCurrentdir.Text           := vDir;
+    DTDirectorMonitor1.Path      := vDir;
+  end;
+end;
+
+procedure TForm7.btnStartClick(Sender: TObject);
+begin
+     DTDirectorMonitor1.Path              := txtCurrentdir.Text;
+
+     if chkFileAdd.Checked then
+     DTDirectorMonitor1.ArquivoAdicionado := True
+     else
+     DTDirectorMonitor1.ArquivoAdicionado := false;
+     if chkFileRemoved.Checked then
+     DTDirectorMonitor1.ArquivoRemovido   := True
+     else
+     DTDirectorMonitor1.ArquivoRemovido   := False;
+     if chkFileRenamed.Checked then
+     DTDirectorMonitor1.ArquivoRenomeado  := True
+     else
+     DTDirectorMonitor1.ArquivoRenomeado  := false;
+     if chkFileModified.Checked then
+     DTDirectorMonitor1.ArquivoModificado := False
+     else
+     DTDirectorMonitor1.ArquivoModificado := False;
+
+     DTDirectorMonitor1.Start;
+end;
+
+procedure TForm7.Button1Click(Sender: TObject);
+begin
+     DTDirectorMonitor1.Stop;
+end;
+
+procedure TForm7.DTDirectorMonitor1Change(Action, FileName: string);
+begin
+      memLog.Lines.Add( 'Acao: ' + Action + ' Arq: ' + FileName );
+end;
+
+end.
